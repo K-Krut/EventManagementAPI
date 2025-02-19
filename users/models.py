@@ -1,5 +1,36 @@
+from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser, PermissionsMixin
 from django.db import models
+
+
+class CustomUserManager(BaseUserManager):
+    def create_user(self, email, password=None):
+        if not email:
+            raise ValueError('Email is required')
+        if not password:
+            raise ValueError('Password is required')
+
+        user = self.model(email=self.normalize_email(email))
+        user.set_password(password)
+
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password):
+        user = self.create_user(email, password)
+        user.is_staff = True
+        user.is_superuser = True
+
+        user.save(using=self._db)
+        return user
+
+    def create_staffuser(self, email, password):
+        user = self.create_user(email, password)
+        user.is_staff = True
+
+        user.save(using=self._db)
+        return user
+
 
 
 class User(AbstractUser, PermissionsMixin):
