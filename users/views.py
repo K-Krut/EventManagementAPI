@@ -1,8 +1,10 @@
+from django.core.serializers import serialize
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from users.serializers import UserRegisterSerializer
+from users.serializers import UserRegisterSerializer, UserLoginSerializer
 
 
 class UserRegisterAPIView(generics.CreateAPIView):
@@ -21,3 +23,20 @@ class UserRegisterAPIView(generics.CreateAPIView):
 
         except Exception as error:
             return Response({"errors": str(error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class UserLoginAPIView(APIView):
+    def post(self, request):
+        print(request.data)
+        try:
+            serializer = UserLoginSerializer(data=request.data)
+
+            if not serializer.is_valid():
+                return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+            response = serializer.save()
+            return Response(response, status=status.HTTP_200_OK)
+
+        except Exception as error:
+            return Response({"errors": str(error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
