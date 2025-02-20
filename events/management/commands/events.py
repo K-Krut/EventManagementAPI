@@ -1,8 +1,18 @@
 from django.core.management.base import BaseCommand
 from faker import Faker
 from events.models import Event
+import random
+from datetime import datetime, timedelta
+
 
 fake = Faker()
+
+
+def random_dates_within_month(year, month):
+    end_date = datetime(year + 1, 1, 1) - timedelta(days=1) if month == 12 else datetime(year, month + 1,1) - timedelta(days=1)
+    start = fake.date_between_dates(datetime(year, month, 1), end_date.date())
+    end = start + timedelta(days=random.choice([3, 4, 5, 7]))
+    return start, end
 
 
 class Command(BaseCommand):
