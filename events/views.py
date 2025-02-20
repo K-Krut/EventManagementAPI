@@ -1,11 +1,12 @@
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import generics, status, permissions
 from rest_framework import filters, exceptions
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
+from rest_framework.views import APIView
 from events.models import Event
-from events.serializers import EventSerializer
+from events.serializers import EventSerializer, EventDetailsSerializer
 
 
 class EventPagination(PageNumberPagination):
@@ -49,9 +50,22 @@ class EventMyListView(generics.ListCreateAPIView):
             return Response({'errors': str(error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class EventDetailView(generics.ListCreateAPIView):
-    def get_queryset(self):
-        pass
+class EventDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = EventDetailsSerializer
+
+    def get(self, request, *args, **kwargs):
+        event_id = kwargs.get('id')
+        try:
+            event = Event.objects.get(id=event_id)
+            response = self.serializer_class(event, context={'request': request})
+            return Response(response.data, status=status.HTTP_200_OK)
+        except ObjectDoesNotExist:
+            return Response({'errors': 'Event not found'}, status=status.HTTP_404_NOT_FOUND)
+        except TimeoutError:
+            return Response({'errors': 'Request timeout'}, status=503)
+        except Exception as error:
+            return Response({'errors': str(error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class EventParticipantsView(generics.ListCreateAPIView):
