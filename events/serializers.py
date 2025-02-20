@@ -35,7 +35,6 @@ class EventSerializer(serializers.ModelSerializer):
 
 
 class EventDetailsSerializer(serializers.ModelSerializer):
-    print('EventDetailsSerializer')
     organizer = ParticipantSerializer(read_only=True)
     is_registered = serializers.SerializerMethodField()
     participants_number = serializers.SerializerMethodField()

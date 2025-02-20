@@ -115,6 +115,32 @@ class EventDetailView(APIView):
         except Exception as error:
             return Response({'errors': str(error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    def put(self, request, *args, **kwargs):
+        event_id = kwargs.get('id')
+
+        try:
+            event = Event.objects.get(id=event_id)
+
+            if not request.user == event.organizer:
+                return Response({'errors': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
+
+            if event.status is Event.Status.DONE:
+                return Response({'errors': 'Finished Events can\'t be updated'}, status=status.HTTP_400_BAD_REQUEST)
+
+            serializer = EventCreateSerializer(event, data=request.data)
+
+            if serializer.is_valid():
+                event = serializer.save(slug=slugify(serializer.validated_data.get('title')))
+                response = self.serializer_class(event, context={'request': request})
+                return Response(response.data, status=status.HTTP_200_OK)
+
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        except ObjectDoesNotExist:
+            return Response({'errors': 'Event not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as error:
+            return Response({'errors': str(error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class EventParticipantsView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
