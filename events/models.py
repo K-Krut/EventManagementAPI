@@ -11,6 +11,10 @@ class Event(models.Model):
         CANCELED = 'Canceled'
         DONE = 'Done'
 
+    class Type(models.TextChoices):
+        PUBLIC = 'Public'
+        PRIVATE = 'Private'
+
     title = models.CharField(max_length=100)
     slug = models.SlugField(max_length=100, unique=True)
     description = models.TextField()
@@ -19,6 +23,7 @@ class Event(models.Model):
     is_online = models.BooleanField(default=True)
     location = models.CharField(max_length=255, blank=True, null=True)
     status = models.CharField(choices=Status, default=Status.DRAFT)
+    type = models.CharField(choices=Type, default=Type.PUBLIC)
     organizer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='organizer')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
