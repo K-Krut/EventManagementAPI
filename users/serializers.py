@@ -40,7 +40,6 @@ class UserLoginSerializer(serializers.Serializer):
     def validate(self, data):
         email = data.get('email')
         password = data.get('password')
-        print(email, password)
 
         if not email:
             raise ValidationError('Email is required')
@@ -57,7 +56,6 @@ class UserLoginSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         user = validated_data['user']
-        print(user)
         tokens = RefreshToken.for_user(user)
 
         return {
