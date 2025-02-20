@@ -1,7 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.text import slugify
-from rest_framework import generics, status, permissions
-from rest_framework import filters, exceptions
+from rest_framework import generics, status
+from rest_framework import filters
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
@@ -79,6 +79,35 @@ class EventDetailView(APIView):
             event = Event.objects.get(id=event_id)
             response = self.serializer_class(event, context={'request': request})
             return Response(response.data, status=status.HTTP_200_OK)
+        except ObjectDoesNotExist:
+            return Response({'errors': 'Event not found'}, status=status.HTTP_404_NOT_FOUND)
+        except TimeoutError:
+            return Response({'errors': 'Request timeout'}, status=503)
+        except Exception as error:
+            return Response({'errors': str(error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def delete(self, request, *args, **kwargs):
+        event_id = kwargs.get('id')
+
+        try:
+            event = Event.objects.get(id=event_id)
+
+            if not request.user == event.organizer:
+                return Response({'errors': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
+
+            if event.status is Event.Status.DONE:
+                return Response({'errors': 'Finished Events can\'t be deleted'}, status=status.HTTP_400_BAD_REQUEST)
+
+            participants = EventParticipants.objects.filter(event=event).exclude(user=event.organizer).exists()
+            if event.status is Event.Status.ACTIVE and participants:
+                return Response(
+                    {'errors': 'Active event with registered users can\'t be deleted'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            event.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
         except ObjectDoesNotExist:
             return Response({'errors': 'Event not found'}, status=status.HTTP_404_NOT_FOUND)
         except TimeoutError:
