@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from faker import Faker
-from events.models import Event
+from events.models import Event, EventParticipants
 import random
 from datetime import datetime, timedelta
 from django.utils.text import slugify
@@ -34,7 +34,7 @@ class Command(BaseCommand):
             title = fake.paragraph(1)
             organizer = random.choice(User.objects.all())
 
-            Event.objects.create(
+            event = Event.objects.create(
                 title=title,
                 slug=slugify(title),
                 description=fake.paragraph(random.randint(4, 15)),
@@ -45,6 +45,11 @@ class Command(BaseCommand):
                 status=random.choice([status[0] for status in Event.Status.choices]),
                 type=random.choice([event_type[0] for event_type in Event.Type.choices]),
                 organizer=organizer
+            )
+
+            EventParticipants.objects.create(
+                event=event,
+                user=organizer
             )
 
         self.stdout.write(self.style.SUCCESS(f'Successfully generated {num_entries} fake data entries'))
