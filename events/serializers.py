@@ -1,4 +1,7 @@
+from datetime import datetime
+
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from events.models import Event, EventParticipants
 from users.models import User
@@ -19,7 +22,6 @@ class EventParticipantSerializer(serializers.ModelSerializer):
 
 
 class EventSerializer(serializers.ModelSerializer):
-
     is_registered = serializers.SerializerMethodField()
 
     class Meta:
@@ -33,7 +35,6 @@ class EventSerializer(serializers.ModelSerializer):
 
 
 class EventDetailsSerializer(serializers.ModelSerializer):
-
     organizer = ParticipantSerializer(read_only=True)
     is_registered = serializers.SerializerMethodField()
     participants_number = serializers.SerializerMethodField()
@@ -57,10 +58,22 @@ class EventCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
         fields = [
-            'id', 'title', 'slug', 'date_start', 'date_end', 'description', 'is_online', 'location', 'status', 'type',
+            'title', 'slug', 'date_start', 'date_end', 'description', 'is_online', 'location', 'status', 'type',
             'organizer'
         ]
-        read_only_fields = ['organizer']
+        read_only_fields = ['organizer', 'slug']
 
     def validate(self, data):
-        pass
+        if data.get('status') not in Event.Status.choices:
+            raise ValidationError('Invalid status')
+
+        if data.get('type') not in Event.Type.choices:
+            raise ValidationError('Invalid type')
+
+        if not data.get('is_online') and not data.get('location'):
+            raise ValidationError('Enter location for offline events or mark event as online')
+
+        if not datetime.strptime(data['date_start']) < datetime.strptime(data['date_end']):
+            raise ValidationError('Event\'s Date Start must be before Date End')
+
+        return data
