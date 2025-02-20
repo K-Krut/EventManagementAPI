@@ -47,8 +47,20 @@ class EventDetailsSerializer(serializers.ModelSerializer):
 
     def get_is_registered(self, obj):
         user = self.context['request'].user
-
         return False if not user.is_authenticated else EventParticipants.objects.filter(user=user, event=obj).exists()
 
     def get_participants_number(self, obj):
         return EventParticipants.objects.filter(event=obj).count()
+
+
+class EventCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Event
+        fields = [
+            'id', 'title', 'slug', 'date_start', 'date_end', 'description', 'is_online', 'location', 'status', 'type',
+            'organizer'
+        ]
+        read_only_fields = ['organizer']
+
+    def validate(self, data):
+        pass

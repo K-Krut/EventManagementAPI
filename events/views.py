@@ -31,6 +31,9 @@ class EventListView(generics.ListCreateAPIView):
         except Exception as error:
             return Response({'errors': str(error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    def perform_create(self, serializer):
+        event = serializer.save()
+
 
 class EventMyListView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
