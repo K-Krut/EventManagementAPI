@@ -1,4 +1,7 @@
+from datetime import datetime
+
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from events.models import Event, EventParticipants
 from users.models import User
@@ -19,7 +22,6 @@ class EventParticipantSerializer(serializers.ModelSerializer):
 
 
 class EventSerializer(serializers.ModelSerializer):
-
     is_registered = serializers.SerializerMethodField()
 
     class Meta:
@@ -33,7 +35,7 @@ class EventSerializer(serializers.ModelSerializer):
 
 
 class EventDetailsSerializer(serializers.ModelSerializer):
-
+    print('EventDetailsSerializer')
     organizer = ParticipantSerializer(read_only=True)
     is_registered = serializers.SerializerMethodField()
     participants_number = serializers.SerializerMethodField()
@@ -47,8 +49,33 @@ class EventDetailsSerializer(serializers.ModelSerializer):
 
     def get_is_registered(self, obj):
         user = self.context['request'].user
-
         return False if not user.is_authenticated else EventParticipants.objects.filter(user=user, event=obj).exists()
 
     def get_participants_number(self, obj):
         return EventParticipants.objects.filter(event=obj).count()
+
+
+class EventCreateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Event
+        fields = [
+            'title', 'slug', 'date_start', 'date_end', 'description', 'is_online', 'location', 'status', 'type',
+            'organizer'
+        ]
+        read_only_fields = ['organizer', 'slug']
+
+    def validate(self, data):
+        if data.get('status') not in Event.Status.values:
+            raise ValidationError('Invalid status')
+
+        if data.get('type') not in Event.Type.values:
+            raise ValidationError('Invalid type')
+
+        if not data.get('is_online') and not data.get('location'):
+            raise ValidationError('Enter location for offline events or mark event as online')
+
+        if not data['date_start'] < data['date_end']:
+            raise ValidationError('Event\'s Date Start must be before Date End')
+
+        return data
