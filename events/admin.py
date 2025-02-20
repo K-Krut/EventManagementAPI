@@ -1,11 +1,8 @@
-from tkinter import EventType
-
 from django.contrib import admin
 
 from events.models import Event, EventParticipants
 
 
-# Register your models here.
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
     list_display = [
