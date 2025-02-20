@@ -1,13 +1,14 @@
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils.text import slugify
 from rest_framework import generics, status, permissions
 from rest_framework import filters, exceptions
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from events.models import Event, EventParticipants
 from events.serializers import EventSerializer, EventDetailsSerializer, ParticipantSerializer, \
-    EventParticipantSerializer
+    EventParticipantSerializer, EventCreateSerializer
 
 
 class EventPagination(PageNumberPagination):
@@ -17,13 +18,22 @@ class EventPagination(PageNumberPagination):
 
 
 class EventListView(generics.ListCreateAPIView):
-    serializer_class = EventSerializer
     pagination_class = EventPagination
     ordering_fields = ['title', 'date_start', 'date_end', 'status', 'type']
     ordering = ['-date_start', 'status', 'type']
 
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title']
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return EventCreateSerializer
+        return EventSerializer
+
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [IsAuthenticated()]
+        return [AllowAny()]
 
     def get_queryset(self):
         try:
@@ -32,7 +42,12 @@ class EventListView(generics.ListCreateAPIView):
             return Response({'errors': str(error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def perform_create(self, serializer):
-        event = serializer.save()
+        try:
+            event = serializer.save(organizer=self.request.user, slug=slugify(serializer.validated_data.get('title')))
+            response = self.serializer_class(event).data
+            return Response(response, status=status.HTTP_201_CREATED)
+        except Exception as error:
+            return Response({'errors': str(error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class EventMyListView(generics.ListCreateAPIView):
