@@ -28,7 +28,6 @@ class UserRegisterAPIView(generics.CreateAPIView):
 
 class UserLoginAPIView(APIView):
     def post(self, request):
-        print(request.data)
         try:
             serializer = UserLoginSerializer(data=request.data)
 
