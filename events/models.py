@@ -31,3 +31,17 @@ class Event(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class EventParticipants(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='event')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user')
+    registered_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-registered_at']
+        unique_together = ('event', 'user')
+
+    def __str__(self):
+        return f'{self.event.title} - {self.user.first_name} {self.user.last_name}'
+
