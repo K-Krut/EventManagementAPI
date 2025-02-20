@@ -10,14 +10,21 @@ class ParticipantSerializer(serializers.ModelSerializer):
         fields = ['id', 'email', 'first_name', 'last_name']
 
 
+class EventParticipantSerializer(serializers.ModelSerializer):
+    user = ParticipantSerializer(read_only=True)
+
+    class Meta:
+        model = EventParticipants
+        fields = ['user', 'registered_at']
+
+
 class EventSerializer(serializers.ModelSerializer):
 
     is_registered = serializers.SerializerMethodField()
 
     class Meta:
         model = Event
-        fields = [
-            'id', 'title', 'slug', 'date_start', 'date_end', 'status', 'type', 'is_registered', ]
+        fields = ['id', 'title', 'slug', 'date_start', 'date_end', 'status', 'type', 'is_registered']
 
     def get_is_registered(self, obj):
         user = self.context['request'].user

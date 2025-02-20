@@ -5,8 +5,9 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from events.models import Event
-from events.serializers import EventSerializer, EventDetailsSerializer
+from events.models import Event, EventParticipants
+from events.serializers import EventSerializer, EventDetailsSerializer, ParticipantSerializer, \
+    EventParticipantSerializer
 
 
 class EventPagination(PageNumberPagination):
@@ -69,5 +70,34 @@ class EventDetailView(APIView):
 
 
 class EventParticipantsView(generics.ListCreateAPIView):
-    def get_queryset(self):
-        pass
+    permission_classes = [IsAuthenticated]
+    serializer_class = EventParticipantSerializer
+
+    def get(self, request, *args, **kwargs):
+        event_id = kwargs.get('id')
+
+        try:
+            try:
+                event = Event.objects.get(id=event_id)
+            except ObjectDoesNotExist:
+                return Response({'errors': 'Event not found'}, status=status.HTTP_404_NOT_FOUND)
+
+            if not event.organizer == request.user:
+                return Response({'errors': 'Access forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
+            participants = EventParticipants.objects.filter(event=event).exclude(user=event.organizer)
+            response = self.serializer_class(participants, many=True)
+
+            return Response({
+                'participants_number': participants.count(),
+                'organizer': ParticipantSerializer(event.organizer).data,
+                'participants': response.data,
+
+            }, status=status.HTTP_200_OK)
+
+        except ObjectDoesNotExist:
+            return Response({'errors': 'Event not found'}, status=status.HTTP_404_NOT_FOUND)
+        except TimeoutError:
+            return Response({'errors': 'Request timeout'}, status=503)
+        except Exception as error:
+            return Response({'errors': str(error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
