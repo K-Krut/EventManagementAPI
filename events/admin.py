@@ -6,12 +6,12 @@ from events.models import Event, EventParticipants
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
     list_display = [
-        'title', 'slug', 'description', 'date_start', 'date_end', 'is_online',
-        'location', 'status', 'type', 'organizer'
+        'title', 'date_start', 'date_end', 'is_online',
+        'location', 'status', 'type', 'organizer', 'created_at'
     ]
     list_filter = ['status', 'type', 'is_online', 'date_start', 'date_end']
     search_fields = ['title', 'description']
-    ordering = ['status', 'date_start', 'type']
+    ordering = ['status', 'date_start', 'type', 'created_at']
     show_facets = admin.ShowFacets.ALWAYS
 
 
