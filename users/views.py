@@ -23,7 +23,7 @@ class UserRegisterAPIView(generics.CreateAPIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         except Exception as error:
-            return Response({"errors": str(error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"errors": str(error)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserLoginAPIView(APIView):

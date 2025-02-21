@@ -44,8 +44,8 @@ class EventListView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         try:
             event = serializer.save(organizer=self.request.user, slug=slugify(serializer.validated_data.get('title')))
-            response = self.serializer_class(event).data
-            return Response(response, status=status.HTTP_201_CREATED)
+            response = EventSerializer(event, context={'request': self.request})
+            return Response(response.data, status=status.HTTP_201_CREATED)
         except Exception as error:
             return Response({'errors': str(error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

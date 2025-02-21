@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.utils.text import slugify
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -59,12 +60,21 @@ class EventCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
         fields = [
-            'title', 'slug', 'date_start', 'date_end', 'description', 'is_online', 'location', 'status', 'type',
+            'id', 'title', 'slug', 'date_start', 'date_end', 'description', 'is_online', 'location', 'status', 'type',
             'organizer'
         ]
-        read_only_fields = ['organizer', 'slug']
+        read_only_fields = ['organizer', 'slug', 'id']
 
     def validate(self, data):
+
+        title = data.get('title')
+
+        if title:
+            slug = slugify(title)
+            if Event.objects.filter(slug=slug).exists():
+                raise ValidationError('Event with this slug already exists. Change event title')
+            data['slug'] = slug
+
         if data.get('status') not in Event.Status.values:
             raise ValidationError('Invalid status')
 
