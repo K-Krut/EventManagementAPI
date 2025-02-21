@@ -63,7 +63,7 @@ class EventMyListView(generics.ListCreateAPIView):
     def get_queryset(self):
         user = self.request.user
         try:
-            queryset = Event.objects.filter(organizer=user) | Event.objects.filter(event__user=user)
+            queryset = Event.objects.filter(organizer=user) | Event.objects.filter(event__user=user, event__status__in=[Event.Status.ACTIVE, Event.Status.DONE])
             return queryset.distinct().order_by(*self.ordering)
         except Exception as error:
             return Response({'errors': str(error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -175,6 +175,7 @@ class EventDetailView(APIView):
 class EventParticipantsView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = EventParticipantSerializer
+    pagination_class = EventPagination
 
     def get(self, request, *args, **kwargs):
         event_id = kwargs.get('id')
