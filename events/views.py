@@ -43,7 +43,7 @@ class EventListView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         try:
-            event = serializer.save(organizer=self.request.user, slug=slugify(serializer.validated_data.get('title')))
+            event = serializer.save(organizer=self.request.user)
             response = EventSerializer(event, context={'request': self.request})
             return Response(response.data, status=status.HTTP_201_CREATED)
         except Exception as error:
