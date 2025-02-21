@@ -130,7 +130,7 @@ class EventDetailView(APIView):
             serializer = EventCreateSerializer(event, data=request.data)
 
             if serializer.is_valid():
-                event = serializer.save(slug=slugify(serializer.validated_data.get('title')))
+                event = serializer.save()
                 response = self.serializer_class(event, context={'request': request})
                 return Response(response.data, status=status.HTTP_200_OK)
 
@@ -157,9 +157,8 @@ class EventDetailView(APIView):
             serializer = EventUpdateSerializer(event, data=request.data, partial=True)
 
             if serializer.is_valid():
-                title = serializer.validated_data.get('title')
 
-                event = serializer.save(slug=slugify(title)) if title else serializer.save()
+                event = serializer.save()
 
                 response = self.serializer_class(event, context={'request': request})
                 return Response(response.data, status=status.HTTP_200_OK)
