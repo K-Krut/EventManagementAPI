@@ -28,3 +28,10 @@ Documentation:
 
 
 
+Build the Docker image
+docker build -t event-management-api .
+
+Run the Docker container
+docker run -p 8000:8000 event-management-api
+
+The API server will be accessible at http://0.0.0.0:8000/.
