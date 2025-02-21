@@ -101,6 +101,15 @@ class EventUpdateSerializer(serializers.ModelSerializer):
         read_only_fields = ['organizer', 'slug']
 
     def validate(self, data):
+
+        title = data.get('title')
+
+        if title:
+            slug = slugify(title)
+            if Event.objects.filter(slug=slug).exists():
+                raise ValidationError('Event with this slug already exists. Change event title')
+            data['slug'] = slug
+
         if data.get('status'):
             if data.get('status') not in Event.Status.values:
                 raise ValidationError('Invalid status')
